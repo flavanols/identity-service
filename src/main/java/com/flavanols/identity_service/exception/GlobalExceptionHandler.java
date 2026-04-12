@@ -11,15 +11,6 @@ import java.util.Arrays;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse<Object>> handlingRuntimeException(RuntimeException exception) {
-        ApiResponse<Object> apiResponse = new ApiResponse<>();
-
-        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-        apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
-
-        return ResponseEntity.badRequest().body(apiResponse);
-    }
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse<Object>> handlingAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();
@@ -30,6 +21,18 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(apiResponse);
     }
+    
+    @ExceptionHandler(value = Exception.class)
+    ResponseEntity<ApiResponse<Object>> handlingRuntimeException(RuntimeException exception) {
+        ApiResponse<Object> apiResponse = new ApiResponse<>();
+
+        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
+        apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<Object>> handlingValidation(MethodArgumentNotValidException exception) {
         String enumkey = exception.getFieldError().getDefaultMessage();
