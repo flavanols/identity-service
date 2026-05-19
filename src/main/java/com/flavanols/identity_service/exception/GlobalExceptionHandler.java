@@ -1,16 +1,21 @@
 package com.flavanols.identity_service.exception;
 
 import com.flavanols.identity_service.dto.request.ApiResponse;
+import jakarta.validation.ConstraintViolation;
+import lombok.extern.java.Log;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 
 @ControllerAdvice
+@Log
 public class GlobalExceptionHandler {
+    private static final String MIN_ATTRIBUTE = "min";
 
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse<Object>> handlingAppException(AppException exception) {
@@ -48,15 +53,27 @@ public class GlobalExceptionHandler {
         String enumkey = exception.getFieldError().getDefaultMessage();
 
         ErrorCode errorCode = ErrorCode.INVALID_KEY;
+        Map<String, Object> attributes = null;
         try {
             errorCode = ErrorCode.valueOf(enumkey);
+
+            ConstraintViolation<?> constrainViolation = exception.getBindingResult().getAllErrors().getFirst().unwrap(ConstraintViolation.class);
+
+            attributes = constrainViolation.getConstraintDescriptor().getAttributes();
+            log.info(attributes.toString());
         } catch (IllegalArgumentException e) {
 
         }
         ApiResponse<Object> apiResponse = new ApiResponse<>();
 
         apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
+        apiResponse.setMessage(Objects.nonNull(attributes) ? mapAttribute(errorCode.getMessage(), attributes) : errorCode.getMessage());
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    private String mapAttribute(String message, Map<String, Object> attributes) {
+        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));
+
+        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
     }
 }
